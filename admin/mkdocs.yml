@@ -1,0 +1,44 @@
+# Подпроект «Администрирование PayBridge B2B».
+# Собирается в составе общего сайта (корневой mkdocs.yml, плагин monorepo)
+# или отдельно для локального просмотра: run_the_docs.sh / run_the_docs.bat.
+site_name: admin            # используется monorepo как префикс URL: /admin/
+site_description: Администрирование PayBridge B2B
+docs_dir: docs
+
+nav:
+  - index.md
+  - Архитектура решения: architecture.md
+  - Структура решения: structure.md
+  - Компоненты:
+      - Payment Service: components/payment-service.md
+      - Incoming Gateway: components/incoming-gateway.md
+
+theme:
+  name: material
+  language: ru
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+plugins:
+  - search:
+      lang: [ru, en]
+  - render_swagger
+  - build_plantuml:
+      render: server
+      server: !ENV [PLANTUML_SERVER, 'https://www.plantuml.com/plantuml']
+      output_format: svg
+      diagram_root: docs/diagrams
+      output_folder: out
+      input_folder: src

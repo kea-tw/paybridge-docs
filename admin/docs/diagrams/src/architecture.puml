@@ -1,0 +1,57 @@
+@startuml architecture
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+skinparam linetype ortho
+skinparam nodesep 60
+' Раскладка сверху вниз: банк над PayBridge, НПС справа. Направления задаются в связях (Rel_U, Rel_D, Rel_L, Rel_R).
+skinparam ranksep 60
+
+HIDE_STEREOTYPE()
+
+AddElementTag("infra", $shape=RoundedBoxShape(), $bgColor="Blue", $fontColor="white")
+AddElementTag("storage", $shape=RoundedBoxShape(), $bgColor="lightSkyBlue", $fontColor="black")
+AddElementTag("bank", $bgColor="", $fontColor="black")
+AddElementTag("nps", $bgColor="lightgreen", $fontColor="black")
+
+Person_Ext(payer, "Плательщик\n(юридическое лицо)")
+
+Boundary(bank, "Системы банка") {
+  Component_Ext(dbo, "Интернет-банк для юридических лиц", $tags = "bank")
+  Component_Ext(abs, "АБС", $tags = "bank")
+  Component_Ext(hsm, "СКЗИ", $tags = "bank")
+}
+
+Boundary(paybridge, "PayBridge B2B") {
+  Component(pay, "Payment Service")
+  Component(inc, "Incoming Gateway")
+  Component(crypto, "Crypto Service")
+  ContainerDb(db, "PostgreSQL", $tags = "storage")
+  Component_Ext(bus, "NATS", $tags = "infra")
+  Component(npsc, "NPS Connector")
+  Component(mapi, "Merchant API")
+}
+
+Boundary(npsb, "Национальная платёжная сеть") {
+  Component_Ext(nps, "Платёжная платформа НПС", $tags = "nps")
+}
+
+Person_Ext(merchant, "Получатель (ТСП)")
+
+BiRel_D(dbo, pay, "2")
+Rel_U(pay, abs, "3")
+Rel_D(pay, npsc, "4")
+BiRel_R(npsc, nps, "5")
+Rel_U(npsc, crypto, "6")
+Rel_U(crypto, hsm, " ")
+Rel_L(npsc, bus, "7")
+BiRel_U(bus, inc, "8")
+Rel_U(inc, abs, "9")
+Rel(pay, bus, "10")
+Rel_U(bus, abs, "11")
+Rel_D(pay, db, "12")
+Rel_U(mapi, db, "12")
+Rel(inc, mapi, "13")
+BiRel_R(merchant, mapi, "1")
+Rel_D(payer, dbo, " ")
+@enduml

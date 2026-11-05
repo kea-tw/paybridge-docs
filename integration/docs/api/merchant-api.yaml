@@ -1,0 +1,173 @@
+openapi: 3.0.3
+info:
+  title: PayBridge Merchant API
+  version: 1.2.0
+  description: |
+    API для торгово-сервисных предприятий: платёжные ссылки, статусы платежей и возвраты.
+    Продукт вымышлен, это демонстрационная спецификация.
+servers:
+  - url: https://sandbox.paybridge.example
+    description: Тестовый контур
+  - url: https://api.paybridge.example
+    description: Промышленный контур
+security:
+  - oauth2: []
+tags:
+  - name: Платёжные ссылки
+  - name: Платежи
+paths:
+  /v1/payment-links:
+    post:
+      tags: [Платёжные ссылки]
+      summary: Создать платёжную ссылку
+      description: Создаёт одноразовую платёжную ссылку и QR-код для оплаты юрлицом.
+      operationId: createPaymentLink
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentLinkCreate' }
+            example:
+              merchantId: MRC-0001
+              amount: 150000
+              currency: RUB
+              purpose: Оплата по счёту № 42 от 01.10.2026
+              expiresInMinutes: 1440
+      responses:
+        '201':
+          description: Ссылка создана.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentLink' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /v1/payment-links/{linkId}:
+    get:
+      tags: [Платёжные ссылки]
+      summary: Получить платёжную ссылку
+      description: Возвращает ссылку, её статус и данные платежа, если ссылка оплачена.
+      operationId: getPaymentLink
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema: { type: string, example: lnk_2b9x7 }
+      responses:
+        '200':
+          description: Платёжная ссылка.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentLink' }
+        '404': { $ref: '#/components/responses/Error' }
+  /v1/payments/{paymentId}:
+    get:
+      tags: [Платежи]
+      summary: Получить платёж
+      operationId: getPayment
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+      responses:
+        '200':
+          description: Платёж.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Payment' }
+        '404': { $ref: '#/components/responses/Error' }
+  /v1/payments/{paymentId}/refunds:
+    post:
+      tags: [Платежи]
+      summary: Вернуть платёж
+      description: Полный или частичный возврат исполненного платежа. Сумма всех возвратов не может превышать сумму платежа.
+      operationId: createRefund
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, reason]
+              properties:
+                amount: { type: integer, description: Сумма возврата в копейках., example: 50000 }
+                reason: { type: string, maxLength: 140, example: Возврат части товара }
+      responses:
+        '202':
+          description: Возврат принят в обработку.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Refund' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://sandbox.paybridge.example/oauth/token
+          scopes: {}
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: UUID запроса. Повтор с тем же ключом в течение 24 часов возвращает исходный ответ.
+      schema: { type: string, format: uuid }
+    PaymentId:
+      name: paymentId
+      in: path
+      required: true
+      schema: { type: string, example: pay_8f3k2 }
+  schemas:
+    PaymentLinkCreate:
+      type: object
+      required: [merchantId, amount, currency, purpose]
+      properties:
+        merchantId: { type: string, description: Идентификатор ТСП, выданный банком., example: MRC-0001 }
+        amount: { type: integer, minimum: 1, description: Сумма в копейках., example: 150000 }
+        currency: { type: string, enum: [RUB] }
+        purpose: { type: string, maxLength: 210, description: Назначение платежа. }
+        expiresInMinutes: { type: integer, minimum: 5, maximum: 43200, default: 1440, description: Срок действия ссылки. }
+    PaymentLink:
+      type: object
+      properties:
+        linkId: { type: string, example: lnk_2b9x7 }
+        url: { type: string, format: uri, example: 'https://pay.paybridge.example/l/lnk_2b9x7' }
+        qrPayload: { type: string, description: Строка для генерации QR-кода. }
+        status: { type: string, enum: [ACTIVE, PAID, EXPIRED] }
+        amount: { type: integer, example: 150000 }
+        expiresAt: { type: string, format: date-time }
+        paymentId: { type: string, nullable: true, description: Заполняется, когда ссылка оплачена. }
+    Payment:
+      type: object
+      properties:
+        paymentId: { type: string, example: pay_8f3k2 }
+        status: { type: string, enum: [CREATED, PROCESSING, UNKNOWN, COMPLETED, REJECTED, REFUNDED] }
+        amount: { type: integer, example: 150000 }
+        refundedAmount: { type: integer, example: 0 }
+        reason: { type: string, nullable: true, description: Причина отклонения для статуса REJECTED. }
+        completedAt: { type: string, format: date-time, nullable: true }
+    Refund:
+      type: object
+      properties:
+        refundId: { type: string, example: rfd_71kd0 }
+        paymentId: { type: string, example: pay_8f3k2 }
+        amount: { type: integer, example: 50000 }
+        status: { type: string, enum: [PROCESSING, COMPLETED, REJECTED] }
+    Error:
+      type: object
+      properties:
+        code: { type: string, example: VALIDATION_ERROR }
+        message: { type: string }
+        traceId: { type: string }
+  responses:
+    Error:
+      description: Ошибка. Коды описаны в разделе «Коды ошибок».
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }

@@ -1,0 +1,20 @@
+@startuml payment-statuses
+!theme plain
+skinparam defaultFontName Arial
+skinparam shadowing false
+hide empty description
+title Статусная модель платежа
+
+[*] --> CREATED : POST /v1/payments
+CREATED --> PROCESSING : средства зарезервированы
+CREATED --> REJECTED : недостаточно средств
+PROCESSING --> COMPLETED : НПС подтвердила
+PROCESSING --> REJECTED : НПС отклонила
+PROCESSING --> UNKNOWN : нет ответа НПС\nза 30 с
+UNKNOWN --> COMPLETED : сверка
+UNKNOWN --> REJECTED : сверка
+COMPLETED --> REFUNDED : возврат
+COMPLETED --> [*]
+REJECTED --> [*]
+REFUNDED --> [*]
+@enduml

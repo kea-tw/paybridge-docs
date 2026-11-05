@@ -1,0 +1,34 @@
+# Подпроект «Кабинет ТСП» (руководство пользователя).
+# Собирается в составе общего сайта (корневой mkdocs.yml, плагин monorepo)
+# или отдельно для локального просмотра: run_the_docs.sh / run_the_docs.bat.
+site_name: user            # используется monorepo как префикс URL: /user/
+site_description: Руководство пользователя кабинета ТСП
+docs_dir: docs
+
+nav:
+  - index.md
+  - Вход в кабинет: login.md
+  - Выставление счёта по ссылке: payment-link.md
+  - Поиск платежа и возврат: refund.md
+
+theme:
+  name: material
+  language: ru
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - sane_lists
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+plugins:
+  - search:
+      lang: [ru, en]

@@ -1,0 +1,21 @@
+@startuml payment-service
+!theme plain
+skinparam componentStyle rectangle
+skinparam defaultFontName Arial
+skinparam shadowing false
+left to right direction
+title Payment Service: взаимодействия
+
+[Интернет-банк] as dbo
+[Payment Service] as pay #E3F2FD
+[АБС] as abs
+[NPS Connector] as npsc
+queue "Шина NATS" as bus
+database "PostgreSQL\nсхема payments" as db
+
+dbo --> pay : HTTPS 8443\nPOST /v1/payments
+pay --> abs : HTTPS\nрезервирование
+pay --> npsc : платёж к отправке
+pay --> bus : события статусов,\nпроводки на списание
+pay --> db
+@enduml

@@ -1,0 +1,8 @@
+site/
+.venv/
+__pycache__/
+**/diagrams/out/
+# резервные копии draw.io и служебные файлы
+*.bkp
+.$*
+tree.txt

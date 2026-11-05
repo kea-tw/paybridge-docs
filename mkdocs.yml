@@ -1,0 +1,80 @@
+# Корневой сайт документации PayBridge B2B (демонстрационный проект, портфолио).
+# Собирает подпроекты admin/, integration/ и user/ в один сайт через плагин monorepo.
+site_name: PayBridge B2B
+site_description: Документация шлюза B2B-платежей PayBridge, демонстрационный проект технического писателя
+site_author: Екатерина Качалова
+site_url: !ENV [SITE_URL, 'http://127.0.0.1:8000/']
+repo_url: !ENV [REPO_URL, '']
+copyright: Демонстрационный проект. Продукт и компания вымышлены.
+
+theme:
+  name: material
+  language: ru
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: light blue
+      toggle:
+        icon: material/weather-night
+        name: Тёмная тема
+    - scheme: slate
+      primary: indigo
+      accent: light blue
+      toggle:
+        icon: material/weather-sunny
+        name: Светлая тема
+  features:
+    - navigation.instant
+    - navigation.tracking
+    # - navigation.tabs
+    # - navigation.sections
+    # - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
+    - toc.integrate
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Главная: index.md
+  - Администрирование: '!include ./admin/mkdocs.yml'
+  - Интеграция: '!include ./integration/mkdocs.yml'
+  - Кабинет ТСП: '!include ./user/mkdocs.yml'
+  - История изменений: changelog.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - sane_lists
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+      toc_depth: 3          # показывать заголовки до ### включительно; "2-3" — только ## и ###
+      title: На этой странице   # подпись над оглавлением, по умолчанию «Содержание»
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+
+plugins:
+  - monorepo   # подпроекты admin/ и integration/ со своими mkdocs.yml
+  - search:
+      lang: [ru, en]
+  - render_swagger
+# Диаграммы PlantUML рендерятся сборкой подпроектов (см. run_the_docs и Dockerfile):
+# у каждого подпроекта свой плагин build_plantuml и своя папка docs/diagrams.

@@ -1,0 +1,32 @@
+@startuml outgoing-payment
+!theme plain
+skinparam defaultFontName Arial
+skinparam shadowing false
+autonumber
+title Исходящий B2B-платёж по платёжной ссылке
+
+actor "Плательщик" as payer
+participant "Интернет-банк" as dbo
+participant "Payment Service" as pay
+participant "NPS Connector" as npsc
+participant "НПС" as nps
+queue "NATS" as bus
+participant "АБС" as abs
+
+payer -> dbo : Сканирует QR-код / открывает ссылку
+dbo -> pay : GET /v1/payment-links/{linkId}
+pay --> dbo : Реквизиты получателя, сумма, назначение
+payer -> dbo : Подтверждает платёж
+dbo -> pay : POST /v1/payments\n(Idempotency-Key)
+pay -> abs : Резервирование средств
+abs --> pay : OK
+pay --> dbo : 202 Accepted, status = PROCESSING
+pay -> npsc : Платёж к отправке
+npsc -> nps : pacs.008 (подписан)
+nps --> npsc : pacs.002, статус ACCP
+npsc -> pay : Платёж исполнен
+pay -> bus : Проводка на списание
+bus -> abs : Проводка на списание
+pay -> dbo : Webhook: status = COMPLETED
+dbo --> payer : Платёж выполнен
+@enduml

@@ -1,0 +1,28 @@
+@startuml incoming-payment
+!theme plain
+skinparam defaultFontName Arial
+skinparam shadowing false
+autonumber
+title Входящий B2B-платёж
+
+participant "НПС" as nps
+participant "NPS Connector" as npsc
+queue "NATS" as bus
+participant "Incoming Gateway" as inc
+participant "АБС" as abs
+participant "Merchant API" as mapi
+actor "ТСП" as merchant
+
+nps -> npsc : pacs.008
+npsc -> bus : Входящий платёж
+bus -> inc : Входящий платёж
+inc -> abs : Проверка счёта получателя
+abs --> inc : Счёт активен
+inc -> bus : Платёж принят
+bus -> npsc : Платёж принят
+npsc -> nps : pacs.002, статус ACCP
+inc -> bus : Проводка на зачисление
+bus -> abs : Проводка на зачисление
+inc -> mapi : Платёж по ссылке оплачен
+mapi -> merchant : Webhook: payment.completed
+@enduml

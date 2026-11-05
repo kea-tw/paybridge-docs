@@ -1,0 +1,19 @@
+@startuml incoming-gateway
+!theme plain
+skinparam componentStyle rectangle
+skinparam defaultFontName Arial
+skinparam shadowing false
+left to right direction
+title Incoming Gateway: взаимодействия
+
+[NPS Connector] as npsc
+queue "Шина NATS" as bus
+[Incoming Gateway] as inc #E3F2FD
+[АБС] as abs
+[Merchant API] as mapi
+
+npsc --> bus : входящий платёж
+bus <--> inc : входящий платёж /\nпроводка на зачисление
+inc --> abs : HTTPS\nпроверка счёта
+inc --> mapi : ссылка оплачена
+@enduml
