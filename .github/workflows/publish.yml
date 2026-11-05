@@ -15,17 +15,31 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+env:
+  PLANTUML_VERSION: 1.2024.8
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - run: pip install -r requirements.txt
-      - name: Render diagrams (subprojects)
-        run: for p in admin integration; do (cd $p && mkdocs build -q -d /tmp/$p); done
+
+      # Диаграммы рисует PlantUML прямо в сборке, без внешнего сервера.
+      # Java на раннере уже есть, Graphviz нужен для схем компонентов и состояний.
+      - name: Install PlantUML
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q graphviz
+          curl -sSL -o plantuml.jar \
+            https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar
+      - name: Render diagrams
+        run: |
+          java -Djava.awt.headless=true -jar plantuml.jar -tsvg -o ../out \
+            admin/docs/diagrams/src/*.puml integration/docs/diagrams/src/*.puml
+
       - name: Build site
         env:
           SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
