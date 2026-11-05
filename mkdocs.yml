@@ -40,6 +40,13 @@ theme:
     - toc.follow
     - toc.integrate
 
+extra_javascript:
+  # Swagger UI подключается на всём сайте: при мгновенной навигации (navigation.instant)
+  # тема не загружает внешние скрипты страницы, и без этого Swagger не отрисуется. 
+  # При отключении navigation.instant можно удалить этот блок
+  - path: assets/swagger/swagger-ui-bundle.js
+    defer: true
+
 extra_css:
   - stylesheets/extra.css
 
