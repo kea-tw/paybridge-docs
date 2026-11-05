@@ -75,6 +75,11 @@ plugins:
   - monorepo   # подпроекты admin/ и integration/ со своими mkdocs.yml
   - search:
       lang: [ru, en]
-  - render_swagger
+  - render_swagger:
+          # Swagger UI хранится в docs/assets/swagger, а не загружается с CDN:
+          # страница API открывается сразу и работает без доступа к unpkg.com.
+          # Путь относительный от страницы integration/api/merchant-api/.
+          javascript: ../../../assets/swagger/swagger-ui-bundle.js
+          css: ../../../assets/swagger/swagger-ui.css
 # Диаграммы PlantUML рендерятся сборкой подпроектов (см. run_the_docs и Dockerfile):
 # у каждого подпроекта свой плагин build_plantuml и своя папка docs/diagrams.
